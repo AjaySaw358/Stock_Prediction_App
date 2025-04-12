@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Prediction Result</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        #trendChart {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 800px;
+            max-height: 450px;
+            margin: 30px auto;
+        }
+    </style>
+</head>
+<body>
+    <h2>📈 Predicted Close Price Trend</h2>
+
+    <canvas id="trendChart"></canvas>
+
+    <h3>Next Predicted Close: <span style="color: green">{{ prediction[0]|round(2) }}</span></h3>
+
+    <a href="/">← Predict Again</a>
+
+    <script>
+        const trendData = {{ close_trend|tojson }};
+        const labels = trendData.map((_, i) =>
+            i === trendData.length - 1 ? "Predicted" : `Day ${i + 1}`
+        );
+
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Close Price Trend",
+                    data: trendData,
+                    borderColor: "#007bff",
+                    backgroundColor: "rgba(0,123,255,0.1)",
+                    fill: true,
+                    tension: 0.3,
+                    pointBackgroundColor: (ctx) =>
+                        ctx.dataIndex === trendData.length - 1 ? 'red' : '#007bff',
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

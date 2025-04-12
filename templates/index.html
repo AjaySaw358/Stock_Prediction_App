@@ -2,129 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Market Predictor</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  <!-- Chart.js for graphs -->
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f4f4f4;
-        }
-        h2 {
-            color: #333;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            padding: 20px;
-            background: white;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-        }
-        input, button {
-            padding: 10px;
-            width: 80%;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-        }
-        button {
-            background: #28a745;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #218838;
-        }
-        .chart-container {
-            width: 100%;
-            max-width: 500px;  /* Prevents stretching */
-            margin: auto;
-            height: 300px;  /* Fix height to avoid excessive scrolling */
-        }
-        canvas {
-            width: 100% !important;
-            height: 100% !important;
-        }
-    </style>
+    <title>Stock Prediction</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-
-    <div class="container">
-        <h2>Stock Market Predictor</h2>
-
-        <!-- Input for Stock Features -->
-        <input type="text" id="features" placeholder="Enter 40 values (comma-separated)">
-        <button onclick="predictStock()">Predict</button>
-
-        <!-- Display Prediction -->
-        <h3>Prediction: <span id="predictionResult">N/A</span></h3>
-
-        <!-- Chart for Stock Trends -->
-        <div class="chart-container">
-            <canvas id="stockChart"></canvas>
+    <h1>📊Stock Predictor</h1>
+    <form action="/predict" method="POST">
+        <div class="form-container">
+            {% for i in range(10) %}
+            <div class="day-input">
+                <label>Day {{ i + 1 }}</label>
+                <input name="open_{{i}}" type="number" step="any" placeholder="Open" required value="{{ 4300 + i * 10 }}">
+                <input name="high_{{i}}" type="number" step="any" placeholder="High" required value="{{ 4400 + i * 10 }}">
+                <input name="low_{{i}}" type="number" step="any" placeholder="Low" required value="{{ 50 + i * 2 }}">
+                <input name="close_{{i}}" type="number" step="any" placeholder="Close" required value="{{ 1.2 + i * 0.1 }}">
+            </div>
+            {% endfor %}
         </div>
-    </div>
-
-    <script>
-        async function predictStock() {
-            let inputData = document.getElementById("features").value;
-            let featureArray = inputData.split(',').map(Number);
-
-            if (featureArray.length !== 40) {  // Expecting 10 time steps * 4 features each
-                alert("Please enter exactly 40 values (10 time steps * 4 features)");
-                return;
-            }
-
-            let payload = { "features": [] };
-            for (let i = 0; i < 10; i++) {
-                payload["features"].push(featureArray.slice(i * 4, (i + 1) * 4));
-            }
-
-            let response = await fetch("/predict", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-
-            let data = await response.json();
-            document.getElementById("predictionResult").innerText = data.prediction[0][0];
-
-            // Update Chart with New Data
-            updateChart(featureArray.slice(-40));  // Show last 10 values on chart
-        }
-
-        // Initialize Chart.js
-        let ctx = document.getElementById("stockChart").getContext("2d");
-        let stockChart = new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: Array(10).fill("").map((_, i) => "T-" + (9 - i)),  // Last 10 time steps
-                datasets: [{
-                    label: "Stock Feature Trend",
-                    data: Array(10).fill(0),  // Placeholder data
-                    borderColor: "#007bff",
-                    backgroundColor: "rgba(0, 123, 255, 0.2)",
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { beginAtZero: true }
-                }
-            }
-        });
-
-        // Function to Update Chart Data
-        function updateChart(dataArray) {
-            stockChart.data.datasets[0].data = dataArray;
-            stockChart.update();
-        }
-    </script>
-
+        <button type="submit">Predict</button>
+    </form>
 </body>
 </html>

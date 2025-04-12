@@ -1,38 +1,40 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, render_template
 import numpy as np
 import tensorflow as tf
 from keras.losses import MeanSquaredError
 
-# Register the custom loss function
 custom_objects = {"mse": MeanSquaredError()}
-
-# Load the trained model with the custom loss function
 model = tf.keras.models.load_model("stock_model.h5", custom_objects=custom_objects)
 
 app = Flask(__name__)
-
 
 @app.route('/')
 def home():
     return render_template('index.html')
 
-
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        data = request.json
-        input_data = np.array(data['features'])  # Convert input to NumPy array
+        input_data = []
+        close_values = []
 
-        # Ensure input has the correct shape (1, 10, 4)
-        input_data = input_data.reshape(1, 10, 4)
+        for i in range(10):
+            open_val = float(request.form[f'open_{i}'])
+            high_val = float(request.form[f'high_{i}'])
+            low_val = float(request.form[f'low_{i}'])
+            close_val = float(request.form[f'close_{i}'])
 
-        # Make prediction
-        prediction = model.predict(input_data).tolist()
+            input_data.append([open_val, high_val, low_val, close_val])
+            close_values.append(close_val)
 
-        return jsonify({'prediction': prediction})
+        input_array = np.array(input_data).reshape(1, 10, 4)
+        prediction = model.predict(input_array).flatten().tolist()
+        close_values.append(prediction[0])  # Add predicted value to chart
+
+        return render_template("result.html", close_trend=close_values, prediction=prediction)
+
     except Exception as e:
-        return jsonify({'error': str(e)})
-
+        return f"Error: {str(e)}"
 
 if __name__ == '__main__':
     app.run(debug=True)
